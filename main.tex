@@ -102,7 +102,7 @@ Daniele \textsc{Fontanelli, DII} % Supervisor's Name
 
 \section{Introduction and Objectives}
 
-The Unnamed Aerial Vehicles (\textbf{UAVs}) or drones are becoming more and more used in different applications. The possibility to have a bird view of the world is very useful in many scenarios and the possibility to reach easily space that for a man is difficult or risky are two of the possible application of drones. However a single drone has some limitation due for example to the difficulty to carry heavy objects during fly. This and others problems can be solved using a cooperative swarm of drones or robot, but due to the cooperation of different agents income also different problems as for instance the possibility of collision between different robots. In this writing I present a solution of the problem o the collision between agents using the \textbf{ORCA} approach and testing it in virtual environment with the simulator \textbf{Gazebo}. I will present in order the model used, the ORCA algorithm, the communication system, the solution proposed, the implementation of the system and finally the results, ending with the possible improvements and the conclusions.
+The Unnamed Aerial Vehicles (\textbf{UAVs}) or drones are becoming more and more used in different applications. The possibility to have a bird view of the world is very useful in many scenarios and the possibility to reach easily space that for a man is difficult or risky are two of the possible application of drones. However a single drone has some limitation due for example to the difficulty to carry heavy objects during fly. This and others problems can be solved using a cooperative swarm of drones or robot, but due to the cooperation of different agents income also different problems as for instance the possibility of collision between different robots. In this writing I present a solution of the problem o the collision between agents using the \textbf{ORCA} approach and testing it in virtual environment with the simulator \textbf{Gazebo}. I will present in order the model used, the solution proposed (ORCA algorithm), the communication system, the implementation of the system and finally the results, ending with the possible improvements and the conclusions.
 
 \section{Model of the Drone}
 The Model of the drone is a SDF file explaining the mesh, the collision shape, the inertia matrix and the plugin of each component of the drone. Each drone use the same model template and it contains the following information:
@@ -130,9 +130,10 @@ As we can see in the figures \ref{fig:1} and \ref{fig:2}.
 \label{fig:2}
 \end{figure}
 
-\section{ORCA Algorithm}
+\section{Solution proposed: ORCA Algorithm}
 \label{sec:collision avoidance}
-The approach chosen is \textbf{Optimal Reciprocal Collision Avoidance ($\mathit{ORCA}$)} \cite{DBLP:conf/dars/Alonso-MoraBRBS10}.
+The approach chosen to solve this problem is \textbf{Optimal Reciprocal Collision Avoidance ($\mathit{ORCA}$)} \cite{DBLP:conf/dars/Alonso-MoraBRBS10}. The ORCA collision avoidance provide an algorithm that work well in a distributed system because each agent can compute the needed information in autonomy. The main important thing to pay attention is the creation of a good communication system that allow each drone to have the information needed in time to the computation of the action to take.
+\\
 ORCA is formal approach for reciprocal collision avoidance for robots that have to work in a common work-space. This formulation expect that each drone is completely autonomous and the only essential information needed for the collision avoidance are the position and the velocity of the other elements in the same work-space. The calculation of all the necessary conditions are done in few milliseconds and that approach can be used in crowded spaces. For simplicity I am going to explain the approach in a two dimension environment but in the simulation is used the three dimension algorithm.
 
 \subsection{Formal definition of the problem}
@@ -212,10 +213,20 @@ For the n-Body Collision Avoidance each root $A$ is in loop of acquiring informa
 They key point of this algorithm is that we need to computer the new velocity in time. This can be achieved using linear programming,  $\mathit{ORCA}^\tau_A$ is a convex region delimited by linear edges. The function to e optimized is the distance to the preferred velocity $v^{pref}_A$. The algorithm as a computational time of $O(n)$, where $n$ is the umber of agents in the system. 
 
 \section{Communication System}
-The communication system chosen is a full connect network between all the nodes of the system. The protocol used is UDP this was chosen because the system it's able to work also without the information of all the others drone and it was preferred to have an high number of throughput instead the security to reach all the message of the system. Each agent than collect all the information about the drones in an array where the information of each agent are stored and it will update whenever a new message from a specified drone is available. Practically each agent create a socket as client and a socket as server, where the client is in charge to send the information to all the others agents in the system and the server is in charge to receive the information from all the others agents. this provide
-\section{Solution Proposed}
+The communication system chosen is a full connect network between all the nodes of the system. The protocol used is UDP this was chosen because the system it's able to work also without the information of all the others drone and it was preferred to have an high number of throughput instead of the security to receive all the message of the system. Each agent collect all the information of the other drones in an array where the information of each agent are stored and it will update whenever a new message from a specified drone is available. Practically each agent create a socket as client and a socket as server. The client is in charge to send the information to all the others agents in the system and the server is in charge to receive the information from all the others agents. The information are updated whenever a message it's received and if a message is lost the new message will provide the information needed for the execution of the algorithm. \\
+The simulation system that runs in single machine has create some constraint to the communication system. The communication is run in the same IP address and only the port change from one model to another. That allows the simulation to run properly in a single machine. In real scenario environment probably the communication will be provided with a WiFi module in this case the only setting to change is to modify the IP of each agent instead of the port. The communication via WiFi probably create also a lost of messages higher but it is caused especially to the distance in this case if we don't receive messages from a too distant drone is not a big problem because it's difficult that a drone far away from the receiver will cause a collision.\\
+The message sent is a simple struct of double where are stored the following information:
+\begin{itemize}
+\item An integer \verb|src| that contains the drone that has sent the message;
+\item An integer \verb|id| that contains the number of the message sent by the src drone (not used in this simulation because we are sure to don't lost messages);
+\item A boolean \verb|sync| for the synchronization between the drones (it's used to say when a drone is ready to move);
+\item Three double \verb|x y z| for the pose of the src drone;
+\item Three double \verb|Vx Vy Vz| for the velocity of the src drone;
+\end{itemize}
 
 \section{System Implementation}
+The simulator chosen was Gazebo \cite{gazebo}, It is good for the simulation of robots and their program and algorithms. It allows the generation of realistic ambient. It allows to simulate a population of robot without missing a realistic physics engine and the capacity of visualize the simulation in a graphic environment.
+The implementation is started with the creation of the blender meshes that was the base of the model for the simulation. All the component are built in blender with a particular attention on the computational power needed to elaborate that meshes during the simulation. Both the drone's base and the propeller meshes are exported as .dae or .obj in order to be loaded in the gazebo environment. Than was built the .sdf model template as described above. Considering that each drone has singular proprieties as for example the final destination or the IP address a script for the generation of each model was written. This python script allow the generation of different models given the number of drones wanted in the final simulation.    
 
 \section{Experiments and results}
 
